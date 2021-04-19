@@ -8,3 +8,7 @@ nav:
   - Introduction: 'index.md'
   - Examples: 'examples.md'
   - Models: 'models.md'
+  - Organization : 'organization.md'
+  - Run: 'running.md'
+  - Data: 'data.md'
+  
