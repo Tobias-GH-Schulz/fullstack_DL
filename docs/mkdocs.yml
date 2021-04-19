@@ -1,0 +1,10 @@
+site_name: Tobias Schulz
+theme:
+   name: material
+   language: en
+plugins:
+  - search
+nav:
+  - Introduction: 'index.md'
+  - Examples: 'examples.md'
+  - Models: 'models.md'
