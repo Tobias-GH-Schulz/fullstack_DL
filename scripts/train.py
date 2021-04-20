@@ -1,5 +1,7 @@
-import argparse
 import torch
+import json
+from pathlib import Path
+import argparse
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
@@ -8,32 +10,38 @@ from PIL import Image
 import torchvision
 from torchvision import datasets, models, transforms
 import matplotlib.pyplot as plt
+
 import time
-from functools import lru_cache
+
 import os
+import time
 
 import copy
 
 import requests
 import zipfile
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+#from dotenv import load_dotenv
+
+#load_dotenv(".env")
 
 
-def download_data(url, folder="data"):
-    
+def download_data():
+
     if "data.zip" not in os.listdir():
         r = requests.get(
             "https://github.com/polyrand/strive-ml-fullstack-public/blob/main/06_org_documentation_scripting/data.zip?raw=true"
-            )
+        )
 
         with open("data.zip", "wb") as f:
             f.write(r.content)
-            
-        with zipfile.ZipFile("data.zip", "r") as zip_ref:
-            zip_ref.extractall(folder)
 
-def get_dataloaders(path):
+    with zipfile.ZipFile("data.zip", "r") as zip_ref:
+        zip_ref.extractall("data")
+
+
+def get_dataloaders():
+
     data_transforms = {
         "train": transforms.Compose(
             [
@@ -78,7 +86,13 @@ def get_dataloaders(path):
     }
 
 
-def train_model(model, criterion, optimizer, scheduler, loaders, num_epochs=10):
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+
+def train_model(model, criterion, optimizer, scheduler, num_epochs=10):
+
+    loaders = get_dataloaders()
+
     dataloaders = loaders["dataloaders"]
     dataset_sizes = loaders["dataset_sizes"]
 
@@ -153,7 +167,7 @@ def train_model(model, criterion, optimizer, scheduler, loaders, num_epochs=10):
     return model
 
 
-def create_model(weights=None, epochs=5, optimizer="sgd", loaders):
+def create_model(weights=None, epochs=5, optimizer="sgd"):
 
     model_conv = torchvision.models.resnet18(pretrained=True)
 
@@ -198,7 +212,7 @@ def create_model(weights=None, epochs=5, optimizer="sgd", loaders):
     start = time.perf_counter()
 
     model_conv = train_model(
-        model_conv, criterion, optimizer_conv, exp_lr_scheduler, loaders, num_epochs=epochs
+        model_conv, criterion, optimizer_conv, exp_lr_scheduler, num_epochs=epochs
     )
 
     total = time.perf_counter() - start
@@ -207,17 +221,17 @@ def create_model(weights=None, epochs=5, optimizer="sgd", loaders):
 
 
 def main(args):
+
     print(args)
 
     if args.get_dls:
-        loaders = get_dataloaders()
+        get_dataloaders()
 
     if args.download_data:
         print("downloading data")
         download_data()
 
     if args.train:
-        
         if args.epochs:
             epochs = args.epochs
         else:
@@ -228,7 +242,8 @@ def main(args):
         else:
             optimizer = "sgd"
 
-        create_model(args.load_weights, epochs=epochs, optimizer=optimizer, loaders)
+        create_model(args.load_weights, epochs=epochs, optimizer=optimizer)
+
 
 if __name__ == "__main__":
 
@@ -236,13 +251,11 @@ if __name__ == "__main__":
     parser.add_argument("--download-data", action="store_true")
     parser.add_argument("--get-dls", action="store_true")
     parser.add_argument("--train", action="store_true")
-    parser.add_argument("--data_path", help="The path of the downloaded data", type=str)
-    parser.add_argument("--epochs", help="The number of epochs your model should be trained.", type=int)
-    parser.add_argument("--optimizer", help="The optimizer you would like to use.", type=str)
+    parser.add_argument("--epochs", type=int, help="number of epochs to train")
+    parser.add_argument("--optimizer", type=str)
     parser.add_argument("--load-weights", action="store_true")
 
     args = parser.parse_args()
+
     main(args)
     exit()
-
-# python3 train.py --download-data --train --epochs 3 --optimizer sgd --load-weights my_weigths.pth

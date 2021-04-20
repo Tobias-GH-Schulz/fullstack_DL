@@ -31,24 +31,24 @@ def get_hash(password):
 class DB:
     def __init__(self, dbname):
         self.dbname = dbname
-        self.conn = sqlite3.connect(dbname)
+        self.conn = sqlite3.connect(dbname, check_same_thread=False)
 
         with self.conn as c:
             c.executescript(
                 """
-CREATE TABLE IF NOT EXIST logs (time TEXT, key TEXT, value TEXT);
-CREATE TABLE IF NOT EXIST users (user_id TEXT, email TEXT, password TEXT);
+CREATE TABLE IF NOT EXISTS logs (time TEXT, key TEXT, value TEXT);
+CREATE TABLE IF NOT EXISTS users (user_id TEXT, name TEXT, email TEXT, password TEXT);
 """.strip()
             )
 
-    def create_user(self, email, password):
+    def create_user(self, name, email, password):
 
         hashed_password = get_hash(password)
         new_user_id = str(uuid4())
         with self.conn as c:
             c.execute(
-                "insert into users values (?, ?, ?)",
-                (new_user_id, email, hashed_password),
+                "insert into users values (?, ?, ?, ?)",
+                (new_user_id, name, email, hashed_password),
             )
 
         return new_user_id
@@ -92,16 +92,29 @@ def home():
 
     return render_template("/index.html")
 
+@app.route("/create_user", methods=["POST"])
+def user():
+    if request.method == "POST":
+        name = request.form["Name"]
+        print(name)
+        email = request.form["Email"]
+        password = request.form["Password"]
+        db.create_user(name, email, password)
+
+        return render_template("/upload.html")
+
 @app.route("/upload_image", methods=["POST", "GET"])
 def upload():
 
     return render_template("/upload.html")
 
+
+
 @app.route("/submit", methods=["POST"])
-def upload():
+def request_predict():
 
     if request.method == "POST":
-        password = request.form["user_key"]
+        #password = request.form["user_key"]
         file = request.files["file"]
         img_bytes = file.read()
         print(img_bytes)

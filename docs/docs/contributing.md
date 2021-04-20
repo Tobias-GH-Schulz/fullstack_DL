@@ -9,7 +9,7 @@ To contribute to our work please follow this guide:
 pip install pip-tools
 ```
 ```
-pip-sync requirements/production.txt
+pip-sync requirements/production.txt requirements/dev.txt
 ```
 
 
