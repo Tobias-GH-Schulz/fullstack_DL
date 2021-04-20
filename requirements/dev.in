@@ -1,0 +1,10 @@
+argparse
+torch
+numpy
+Pillow
+torchvision
+matplotlib
+requests
+flask
+pathlib
+black

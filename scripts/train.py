@@ -52,7 +52,7 @@ def get_dataloaders(path):
         ),
     }
 
-    data_dir = path
+    data_dir = "./data/hymenoptera_data"
     image_datasets = {
         x: datasets.ImageFolder(os.path.join(data_dir, x), data_transforms[x])
         for x in ["train", "val"]
