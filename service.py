@@ -1,6 +1,8 @@
 import io
+import sys
 import json
 from functools import lru_cache
+
 from pathlib import Path
 
 import torchvision.transforms as transforms
@@ -13,13 +15,19 @@ import logging
 from flask import Flask, jsonify, request
 
 MODELS_DIR = Path("models")
-ASSETS_DIR = PATH("assets")
+ASSETS_DIR = Path("assets")
 MODEL_NAME = "best_model.pth"
 
-'''
-log = logging.getLogger(flask_service)
-log.setLevel(logging.DEBUG)
-'''
+log = logging.getLogger()
+log.addHandler(logging.StreamHandler(sys.stdout))
+
+LOG_LEVEL = "debug"
+
+if LOG_LEVEL == "info":
+    log.setLevel(logging.INFO)
+else:
+    log.setLevel(logging.DEBUG)
+
 @lru_cache()
 def load_model():
     model = torchvision.models.resnet18(pretrained=True)
@@ -88,7 +96,7 @@ def get_prediction(image_bytes):
     _, y_hat = outputs.max(1)
     predicted_idx = str(y_hat.item())
     return idx2class[int(predicted_idx)]
-    # return classifier_idx_data[predicted_idx]
+    
 
 
 if __name__ == "__main__":

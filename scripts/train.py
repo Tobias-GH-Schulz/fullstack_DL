@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 import time
 from functools import lru_cache
 import os
-import time
 
 import copy
 
@@ -24,7 +23,9 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 def download_data(url, folder="data"):
     
     if "data.zip" not in os.listdir():
-        r = requests.get(url)
+        r = requests.get(
+            "https://github.com/polyrand/strive-ml-fullstack-public/blob/main/06_org_documentation_scripting/data.zip?raw=true"
+            )
 
         with open("data.zip", "wb") as f:
             f.write(r.content)
@@ -52,11 +53,15 @@ def get_dataloaders(path):
         ),
     }
 
-    data_dir = "./data/hymenoptera_data"
+    data_dir = "../data/hymenoptera_data"
     image_datasets = {
         x: datasets.ImageFolder(os.path.join(data_dir, x), data_transforms[x])
         for x in ["train", "val"]
     }
+
+    with open("../assets/class2idx.json", "w") as f:
+        f.write(json.dumps(image_datasets["train"].class_to_idx))
+
     dataloaders = {
         x: torch.utils.data.DataLoader(
             image_datasets[x], batch_size=4, shuffle=True, num_workers=4
@@ -66,11 +71,16 @@ def get_dataloaders(path):
     dataset_sizes = {x: len(image_datasets[x]) for x in ["train", "val"]}
     class_names = image_datasets["train"].classes
 
-    return (dataloaders, dataset_sizes, class_names)
+    return {
+        "class_names": class_names,
+        "dataset_sizes": dataset_sizes,
+        "dataloaders": dataloaders,
+    }
 
 
 def train_model(model, criterion, optimizer, scheduler, loaders, num_epochs=10):
-    dataloaders, dataset_sizes, class_names = loaders
+    dataloaders = loaders["dataloaders"]
+    dataset_sizes = loaders["dataset_sizes"]
 
     since = time.time()
 
@@ -143,7 +153,8 @@ def train_model(model, criterion, optimizer, scheduler, loaders, num_epochs=10):
     return model
 
 
-def load_pretrained_model():
+def create_model(weights=None, epochs=5, optimizer="sgd", loaders):
+
     model_conv = torchvision.models.resnet18(pretrained=True)
 
     for param in model_conv.parameters():
@@ -152,17 +163,54 @@ def load_pretrained_model():
     # Parameters of newly constructed modules have requires_grad=True by default
     num_ftrs = model_conv.fc.in_features
     model_conv.fc = nn.Linear(num_ftrs, 2)
-    
+
     model_conv = model_conv.to(device)
-    """
+
     if weights:
-        pass
-    """
-    return model_conv
+        if weights not in os.listdir():
+            print("The weigths do not exists in the current folder")
+
+        model_conv.load_state_dict(weights)
+
+    criterion = nn.CrossEntropyLoss()
+
+    # Observe that only parameters of final layer are being optimized as
+    # opposed to before.
+
+    if optimizer == "sgd":
+
+        optimizer_conv = optim.SGD(model_conv.fc.parameters(), lr=0.001, momentum=0.9)
+
+    elif optimizer == "adam":
+
+        optimizer_conv = optim.Adam(
+            model_conv.fc.parameters(), lr=0.001, weight_decay=0.01, eps=1e-5,
+        )
+    else:
+        print("Sorry I can't use that optmizer")
+        return
+
+    print(f"Using optmizer: {optimizer_conv}")
+
+    # Decay LR by a factor of 0.1 every 7 epochs
+    exp_lr_scheduler = lr_scheduler.StepLR(optimizer_conv, step_size=3, gamma=0.1)
+
+    start = time.perf_counter()
+
+    model_conv = train_model(
+        model_conv, criterion, optimizer_conv, exp_lr_scheduler, loaders, num_epochs=epochs
+    )
+
+    total = time.perf_counter() - start
+
+    print(f"Total time {total}")
 
 
 def main(args):
     print(args)
+
+    if args.get_dls:
+        loaders = get_dataloaders()
 
     if args.download_data:
         print("downloading data")
@@ -180,41 +228,13 @@ def main(args):
         else:
             optimizer = "sgd"
 
-        model_conv = load_pretrained_model()
-        #model_conv = load_pretrained_model(args.load_weights)
-
-        # load data into dataloader, get dataset size and classes 
-        loaders = get_dataloaders(args.data_path)
-        print(loaders)
-
-        criterion = nn.CrossEntropyLoss()
-        # choose optimizer by args
-        if optimizer == "adam":
-            optimizer_conv = optim.Adam(model_conv.fc.parameters(), lr=0.001, momentum=0.9, weight_decay=0.01, esp=1e-5)
-        elif optimizer == "sgd":
-            optimizer_conv = optim.SGD(model_conv.fc.parameters(), lr=0.001, momentum=0.9)
-
-        exp_lr_scheduler = lr_scheduler.StepLR(optimizer_conv, step_size=3, gamma=0.1)
-
-        start = time.perf_counter()
-
-        model_conv = train_model(model_conv, criterion, optimizer_conv, exp_lr_scheduler, loaders, epochs)
-
-        total = time.perf_counter() - start
-
-        print(f"Total time {total}")
-
-
-    if args.epochs:
-        if not args.train:
-            print("You will need to pass the '--train' argument to train the model")
-            exit()
-
+        create_model(args.load_weights, epochs=epochs, optimizer=optimizer, loaders)
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--download-data", action="store_true")
+    parser.add_argument("--get-dls", action="store_true")
     parser.add_argument("--train", action="store_true")
     parser.add_argument("--data_path", help="The path of the downloaded data", type=str)
     parser.add_argument("--epochs", help="The number of epochs your model should be trained.", type=int)
@@ -223,13 +243,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     main(args)
-    
-    # --download-data
-    # --train --epochs INT (it should have a default)
-    # --optimizer STRING
-    # --load-weights STRING
-    
-    # extra otion
-    # load the data URL from an environment variable
+    exit()
 
 # python3 train.py --download-data --train --epochs 3 --optimizer sgd --load-weights my_weigths.pth

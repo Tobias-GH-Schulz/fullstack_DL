@@ -1,10 +1,5 @@
-argparse
-torch
-numpy
-Pillow
-torchvision
-matplotlib
-requests
-flask
-pathlib
-black
+mkdocs
+flake8
+pip-tools
+pytest
+mkdocs-material
