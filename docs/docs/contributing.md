@@ -26,3 +26,6 @@ To integrate new production dependencies add them to the production.in file and 
 ```
 pip-compile -v --output-file requirements/production.txt requirements/production.in
 ```
+
+For further information please read the documentation of [pip-tools] (https://github.com/jazzband/pip-tools)
+ 

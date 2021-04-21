@@ -8,10 +8,10 @@ from passlib.context import CryptContext
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, url_for, redirect
 
 
-template_dir = Path("templates")
+template_dir = Path("../templates")
 app = Flask(__name__, template_folder=str(template_dir))
 
 
@@ -53,6 +53,15 @@ CREATE TABLE IF NOT EXISTS users (user_id TEXT, name TEXT, email TEXT, password 
 
         return new_user_id
 
+    def check_user(self, name):
+
+        with self.conn as c:
+            [exists] = c.execute('SELECT EXISTS(SELECT 1 FROM users WHERE name = ?)', (name,)).fetchone()
+            if [exists] == [1]:
+                return True
+            else:
+                return False
+
     def validate_password(self, email, password):
         """This function receives an email and password and checks
         if that's the password associated with that email.
@@ -69,7 +78,12 @@ CREATE TABLE IF NOT EXISTS users (user_id TEXT, name TEXT, email TEXT, password 
             return None
         else:
             user_id = user[0]
-            return user_id
+            hashed_password = user[3]
+            email = user[2]
+            if not verify_hash(password, hashed_password):
+                return None
+            else:
+                return user_id
 
     def log_message(self, key, value):
 
@@ -80,8 +94,6 @@ CREATE TABLE IF NOT EXISTS users (user_id TEXT, name TEXT, email TEXT, password 
 
         return
 
-
-# we still need to implement user creation (using another HTML form)
 db = DB(dbname="ml_app.db")
 
 app = Flask(__name__)
@@ -92,19 +104,41 @@ def home():
 
     return render_template("/index.html")
 
-@app.route("/create_user", methods=["POST"])
-def user():
+@app.route("/login", methods=["POST", "GET"])
+def login():
+    return render_template("/login.html")
+
+@app.route("/sign_up", methods=["POST", "GET"])
+def sign_up():
+    return render_template("/sign_up.html")
+
+@app.route("/validate_login", methods=["POST"])
+def validate_login():
     if request.method == "POST":
-        name = request.form["Name"]
-        print(name)
         email = request.form["Email"]
         password = request.form["Password"]
-        db.create_user(name, email, password)
+        print(hashed_pass)
+        if db.validate_password(email, password):
+            #return redirect(url_for('logged'))
+            return "password accepted"
+        else:
+            return "password not accepted"
+            #return redirect(url_for("login"))
 
-        return render_template("/upload.html")
-
-@app.route("/upload_image", methods=["POST", "GET"])
-def upload():
+@app.route("/create_user", methods=["POST"])
+def new_user():
+    if request.method == "POST":
+        name = request.form["Name"]
+        email = request.form["Email"]
+        hashed_pass = get_hash(request.form["Password"])
+        if not db.check_user(name):
+            db.create_user(name, email, hashed_pass)
+            return redirect(url_for('logged'))
+        else:
+            return "user already exists"
+        
+@app.route("/logged", methods=["POST", "GET"])
+def logged():
 
     return render_template("/upload.html")
 
@@ -114,10 +148,14 @@ def upload():
 def request_predict():
 
     if request.method == "POST":
-        #password = request.form["user_key"]
+        password = request.form["Password"]
+        email = request.form["Email"]
+        if not db.validate_password(email=email, password=password):
+            return "not allowed"
+            # better error needed
         file = request.files["file"]
         img_bytes = file.read()
-        print(img_bytes)
+        
         r = requests.post("http://127.0.0.1:5000/predict", files={"file": img_bytes})
 
         r.raise_for_status()

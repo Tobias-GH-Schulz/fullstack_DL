@@ -1,6 +1,8 @@
 {% extends "layout.html" %}
 
-{% block title %} Upload image {% endblock %}
+{% block title %}
+    Login
+{% endblock %}
 
 {% block head %}
     {{ super() }}
@@ -11,24 +13,22 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-auto">
-            <h1>Upload Image</h1>
+            <h2>Hello, please enter your login informations:</h2>
             <hr>
-
-            <form action = "/submit" method="POST" enctype="multipart/form-data">
+            
+            <form action = "/validate_login" method="POST">
 
                 <div class="form-group">
-                    <label>Select Image</label>
+                    <label>Insert your info</label>
                     <div class= "custom-file">
-                        <input type="file" class="custom-file-input" name="file" id="file">
                         <p>E-Mail <input type = "text" name = "Email" /></p>
                         <p>Password <input type = "password" name = "Password" /></p>
-                        <label class="custom-file-label" for="file">Select image...</label>
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary">Upload</button>
+                <button type="submit" class="btn btn-primary">Submit</button>
 
-            </form>
+            </form> 
         </div>
     </div>
 </div>
