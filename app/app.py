@@ -55,7 +55,7 @@ import sqlite3
 from flask import Flask, jsonify, render_template, request, url_for, redirect
 
 
-template_dir = Path("./templates")
+template_dir = Path("../templates")
 app = Flask(__name__, template_folder=str(template_dir))
 
 
