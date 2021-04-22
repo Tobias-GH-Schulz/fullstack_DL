@@ -6,3 +6,4 @@ models/*.pth
 
 ml_app.db
 .vscode/
+.DS_Store
