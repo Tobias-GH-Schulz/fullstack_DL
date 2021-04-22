@@ -5,3 +5,4 @@ data/*
 models/*.pth
 
 ml_app.db
+.vscode/
