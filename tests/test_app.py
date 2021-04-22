@@ -1,4 +1,4 @@
-from app import get_hash, verify_hash, DB
+from app.app import get_hash, verify_hash, DB
 import os
 import re
 import pytest
