@@ -74,12 +74,18 @@ CREATE TABLE IF NOT EXISTS users (user_id TEXT, name TEXT, email TEXT, password 
             "select * from users where email = ?", (email,)
         ).fetchone()
 
+        print(user)
+
         if not user:
             return None
         else:
             user_id = user[0]
-            hashed_password = user[3]
+            name = user[1]
             email = user[2]
+            hashed_password = user[3]
+
+            print(password, hashed_password)
+
             if not verify_hash(password, hashed_password):
                 return None
             else:
