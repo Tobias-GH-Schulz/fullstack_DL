@@ -20,5 +20,4 @@ jobs:
       - name: runtests
         run: |
           python3 -m pytest -vv
-        # run: jupyter nbconvert --execute tests.ipynb --to notebook
 

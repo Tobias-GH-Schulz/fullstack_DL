@@ -45,8 +45,6 @@ except:
             return False
 
 
-
-
 from pathlib import Path
 from uuid import uuid4
 import datetime as dt
@@ -57,7 +55,7 @@ import sqlite3
 from flask import Flask, jsonify, render_template, request, url_for, redirect
 
 
-template_dir = Path("../templates")
+template_dir = Path("./templates")
 app = Flask(__name__, template_folder=str(template_dir))
 
 
@@ -148,7 +146,6 @@ CREATE TABLE IF NOT EXISTS users (user_id TEXT, name TEXT, email TEXT, password 
 
 db = DB(dbname="ml_app.db")
 
-app = Flask(__name__)
 
 @app.route("/", methods=["GET"])
 @app.route("/index", methods=["GET"])
@@ -208,7 +205,7 @@ def request_predict():
         file = request.files["file"]
         img_bytes = file.read()
         
-        r = requests.post("http://127.0.0.1:5002/predict", files={"file": img_bytes})
+        r = requests.post("http://127.0.0.1:5005/predict", files={"file": img_bytes})
 
         r.raise_for_status()
 
