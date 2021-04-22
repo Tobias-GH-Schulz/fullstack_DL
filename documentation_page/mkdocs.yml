@@ -1,0 +1,18 @@
+site_name: Full-Stack Machine Learning Project
+repo_url: https://www.github.com/tobias-gh-schulz/fullstack_DL
+repo_name: tobias-gh-schulz/fullstack_DL
+
+theme:
+   name: material
+   language: en
+   palette:
+    primary: blue grey
+plugins:
+  - search
+nav:
+  - Introduction: 'index.md'
+  - Documentation: "documentation.md"
+  - Contributing: 'contributing.md'
+  - Running the apps: 'running.md'
+  - Training: 'training.md'
+  - Models: 'models.md'
