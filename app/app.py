@@ -158,21 +158,13 @@ CREATE TABLE IF NOT EXISTS users (user_id TEXT, name TEXT, email TEXT, password 
 db = DB(dbname="ml_app.db")
 
 
-@app.route("/", methods=["GET"])
-@app.route("/index", methods=["GET"])
+@app.route("/", methods=["POST", "GET"])
+@app.route("/index", methods=["POST", "GET"])
 def home():
-    return render_template("/index.html")
+    
+    if request.method == "GET":
+        return render_template("/index.html")
 
-@app.route("/login", methods=["POST", "GET"])
-def login():
-    return render_template("/login.html")
-
-@app.route("/sign_up", methods=["POST", "GET"])
-def sign_up():
-    return render_template("/sign_up.html")
-
-@app.route("/validate_login", methods=["POST"])
-def validate_login():
     if request.method == "POST":
         email = request.form["Email"]
         password = request.form["Password"]
@@ -186,33 +178,37 @@ def validate_login():
         else:
             return redirect(url_for("sign_up"))
 
-@app.route("/create_user", methods=["POST"])
+
+@app.route("/sign_up", methods=["POST", "GET"])
 def new_user():
+    
+    if request.method == "GET":
+        return render_template("/sign_up.html")
+
     if request.method == "POST":
         name = request.form["Name"]
         email = request.form["Email"]
         hashed_pass = get_hash(request.form["Password"])
+
         if not db.check_user(email):
             db.create_user(name, email, hashed_pass)
             return redirect(url_for('logged'))
         else:
             return "user already exists"
-        
-@app.route("/logged", methods=["POST", "GET"])
+
+
+@app.route("/submit", methods=["POST", "GET"])
 def logged():
-
-    return render_template("/upload.html")
-
-
-@app.route("/submit", methods=["POST"])
-def request_predict():
+    
+    if request.method == "GET":
+        return render_template("/upload.html")
 
     if request.method == "POST":
-        #password = request.form["Password"]
-        #email = request.form["Email"]
-        #if not db.validate_password(email=email, password=password):
-        #    return "not allowed"
-            # better error needed
+        password = request.form["Password"]
+        email = request.form["Email"]
+        
+        if not db.validate_password(email=email, password=password):
+            return "not allowed"
         file = request.files["file"]
         img_bytes = file.read()
         
