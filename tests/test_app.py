@@ -75,3 +75,9 @@ def test_user_creation(email, name, password):
     # 1. verify user is created
     # 2. verify you can validate the hash
     # 3. whatever you come up with
+
+@pytest.mark.parametrize("password", [("pass"), ("1234"), ("asdasd")])
+def test_password_validation(password):
+    hashed_password = get_hash(password)
+
+    assert verify_hash(password, hashed_password)

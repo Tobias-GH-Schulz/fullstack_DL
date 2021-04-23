@@ -1,5 +1,7 @@
-try:
+try: 
     from passlib.context import CryptContext
+
+    #print("Using passlib")
 
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -8,7 +10,10 @@ try:
         This functions returns True if the password matches the hash,
         otherwise it returns False
         """
+        print("Using passlib")
 
+        print("Verify_hash function: ", plain_password, hashed_password)
+        print(pwd_context.verify(plain_password, hashed_password))
         return pwd_context.verify(plain_password, hashed_password)
 
     def get_hash(password):
@@ -16,6 +21,8 @@ try:
 
 
 except:
+
+    #print("Using hashlib")
 
     # adapted from https://nitratine.net/blog/post/how-to-hash-passwords-in-python/
     import hashlib
@@ -28,6 +35,8 @@ except:
         ).hex()
 
     def verify_hash(plain_password, hashed_password):
+        print("Using hashlib")
+        print("Verify_hash function: ", plain_password, hashed_password)
 
         password_to_check = plain_password  # The password provided by the user to check
 
@@ -58,7 +67,7 @@ from flask import Flask, jsonify, render_template, request, url_for, redirect
 template_dir = Path("../templates")
 app = Flask(__name__, template_folder=str(template_dir))
 
-
+'''
 def verify_hash(plain_password, hashed_password):
     """
     This functions returns True if the password matches the hash,
@@ -70,7 +79,7 @@ def verify_hash(plain_password, hashed_password):
 
 def get_hash(password):
     return pwd_context.hash(password)
-
+'''
 
 class DB:
     def __init__(self, dbname):
@@ -97,10 +106,10 @@ CREATE TABLE IF NOT EXISTS users (user_id TEXT, name TEXT, email TEXT, password 
 
         return new_user_id
 
-    def check_user(self, name):
+    def check_user(self, email):
 
         with self.conn as c:
-            [exists] = c.execute('SELECT EXISTS(SELECT 1 FROM users WHERE name = ?)', (name,)).fetchone()
+            [exists] = c.execute('SELECT EXISTS(SELECT 1 FROM users WHERE email = ?)', (email,)).fetchone()
             if [exists] == [1]:
                 return True
             else:
@@ -121,8 +130,10 @@ CREATE TABLE IF NOT EXISTS users (user_id TEXT, name TEXT, email TEXT, password 
         print(user)
 
         if not user:
+            print("No user")
             return None
         else:
+            print("User found")
             user_id = user[0]
             name = user[1]
             email = user[2]
@@ -150,7 +161,6 @@ db = DB(dbname="ml_app.db")
 @app.route("/", methods=["GET"])
 @app.route("/index", methods=["GET"])
 def home():
-
     return render_template("/index.html")
 
 @app.route("/login", methods=["POST", "GET"])
@@ -166,13 +176,15 @@ def validate_login():
     if request.method == "POST":
         email = request.form["Email"]
         password = request.form["Password"]
-        print(hashed_pass)
-        if db.validate_password(email, password):
-            #return redirect(url_for('logged'))
-            return "password accepted"
+        if db.check_user(email):
+            if db.validate_password(email=email, password=password):
+                #return redirect(url_for('logged'))
+                return "password accepted"
+            else:
+                return "password not accepted"
+                #return redirect(url_for("login"))
         else:
-            return "password not accepted"
-            #return redirect(url_for("login"))
+            return redirect(url_for("sign_up"))
 
 @app.route("/create_user", methods=["POST"])
 def new_user():
@@ -180,7 +192,7 @@ def new_user():
         name = request.form["Name"]
         email = request.form["Email"]
         hashed_pass = get_hash(request.form["Password"])
-        if not db.check_user(name):
+        if not db.check_user(email):
             db.create_user(name, email, hashed_pass)
             return redirect(url_for('logged'))
         else:
@@ -192,15 +204,14 @@ def logged():
     return render_template("/upload.html")
 
 
-
 @app.route("/submit", methods=["POST"])
 def request_predict():
 
     if request.method == "POST":
-        password = request.form["Password"]
-        email = request.form["Email"]
-        if not db.validate_password(email=email, password=password):
-            return "not allowed"
+        #password = request.form["Password"]
+        #email = request.form["Email"]
+        #if not db.validate_password(email=email, password=password):
+        #    return "not allowed"
             # better error needed
         file = request.files["file"]
         img_bytes = file.read()
@@ -212,5 +223,3 @@ def request_predict():
         result_class = r.json()
 
         return render_template("/response.html", response=result_class)
-
-

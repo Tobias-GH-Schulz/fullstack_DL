@@ -13,11 +13,21 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-auto">
-            
-            <h1>Please choose:</h1>
+            <h2>Hello, please enter your login informations:</h2>
             <hr>
-                                    
-            <a href="{{ url_for('login') }}" class="btn btn-outline-success" role="button">Log In</a>
+            
+            <form action = "/validate_login" method="POST">
+
+                <div class="form-group">
+                    <label>Insert your info</label>
+                    <div class= "custom-file">
+                        <p>E-Mail <input type = "text" name = "Email" /></p>
+                        <p>Password <input type = "password" name = "Password" /></p>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-outline success">Log In</button>           
+            <a>If you don't have an account, plese </a><a href="{{ url_for('sign_up') }}">Sign Up</a>
             <a href="{{ url_for('sign_up') }}" class="btn btn-outline-primary" role="button">Sign Up</a>
             
             </form> 
