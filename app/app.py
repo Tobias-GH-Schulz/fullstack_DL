@@ -1,7 +1,8 @@
 try: 
     from passlib.context import CryptContext
+    # from passlib.hash import bcrypt
 
-    #print("Using passlib")
+    print("PASSLIB installed. Using passlib")
 
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -17,12 +18,13 @@ try:
         return pwd_context.verify(plain_password, hashed_password)
 
     def get_hash(password):
+
         return pwd_context.hash(password)
 
 
 except:
 
-    #print("Using hashlib")
+    print("Using hashlib")
 
     # adapted from https://nitratine.net/blog/post/how-to-hash-passwords-in-python/
     import hashlib
@@ -209,6 +211,7 @@ def logged():
         
         if not db.validate_password(email=email, password=password):
             return "not allowed"
+
         file = request.files["file"]
         img_bytes = file.read()
         
